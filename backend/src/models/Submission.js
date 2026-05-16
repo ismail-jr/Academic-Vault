@@ -17,6 +17,11 @@ const submissionSchema = new mongoose.Schema(
       type: String,
       required: [true, "File path is required"],
     },
+    cloudinaryId: {
+      type: String,
+      default: null,
+      index: true,
+    },
     originalName: {
       type: String,
       required: [true, "Original file name is required"],
@@ -113,10 +118,15 @@ submissionSchema.methods.isPending = function () {
   return this.status === "submitted" || this.status === "encrypted";
 };
 
-// Static methods
+const { Types } = require("mongoose");
+
 submissionSchema.statics.getLecturerStats = async function (lecturerId) {
   return this.aggregate([
-    { $match: { lecturer: mongoose.Types.ObjectId(lecturerId) } },
+    {
+      $match: {
+        lecturer: new Types.ObjectId(lecturerId),
+      },
+    },
     {
       $group: {
         _id: "$status",

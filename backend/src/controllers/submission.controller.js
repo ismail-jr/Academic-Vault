@@ -2,6 +2,7 @@
 const Submission = require("../models/Submission");
 const User = require("../models/User");
 const fs = require("fs");
+const cloudinary = require("../config/cloudinary");
 const { encryptFile, encryptAESKey } = require("../services/crypto.service");
 
 exports.uploadSubmission = async (req, res) => {
@@ -10,9 +11,10 @@ exports.uploadSubmission = async (req, res) => {
       req.body;
 
     if (!req.file) {
-      return res
-        .status(400)
-        .json({ success: false, message: "No file uploaded" });
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
     }
 
     const lecturer = await User.findById(lecturerId);
@@ -26,19 +28,31 @@ exports.uploadSubmission = async (req, res) => {
     const inputPath = req.file.path;
     const encryptedPath = inputPath + ".enc";
 
-    // STEP 1: Encrypt file
+    // STEP 1: Encrypt file locally first
     const { key, iv } = await encryptFile(inputPath, encryptedPath);
 
-    // STEP 2: Encrypt AES key with RSA
+    // STEP 2: RSA encrypt AES key
     const encryptedKey = encryptAESKey(key, lecturer.publicKey);
 
-    // Remove original file
-    fs.unlinkSync(inputPath);
+    // STEP 3: Upload encrypted file to Cloudinary
+    const uploadResult = await cloudinary.uploader.upload(encryptedPath, {
+      resource_type: "raw",
+      folder: "encrypted-submissions",
+      public_id: `${Date.now()}-${req.file.originalname}`,
+    });
+
+    // Cleanup local files
+    if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+    if (fs.existsSync(encryptedPath)) fs.unlinkSync(encryptedPath);
 
     const submission = await Submission.create({
       student: req.user._id,
       lecturer: lecturerId,
-      filePath: encryptedPath,
+
+      // CLOUDINARY STORAGE
+      filePath: uploadResult.secure_url,
+      cloudinaryId: uploadResult.public_id,
+
       originalName: req.file.originalname,
       encryptedKey,
       iv,
@@ -51,32 +65,10 @@ exports.uploadSubmission = async (req, res) => {
 
     await submission.populate("lecturer", "name email");
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "File encrypted and uploaded successfully",
-
-      // 🔐 NEW: security info for UI
-      security: {
-        steps: [
-          "File received",
-          "Encrypted with AES-256",
-          "AES key encrypted with RSA",
-          "Stored securely",
-        ],
-        algorithm: "AES-256 + RSA",
-        status: "encrypted",
-      },
-
-      submission: {
-        _id: submission._id,
-        originalName: submission.originalName,
-        assignmentTitle: submission.assignmentTitle,
-        courseCode: submission.courseCode,
-        courseName: submission.courseName,
-        status: submission.status,
-        createdAt: submission.createdAt,
-        lecturer: submission.lecturer,
-      },
+      submission,
     });
   } catch (error) {
     console.error("Upload submission error:", error);
@@ -85,9 +77,9 @@ exports.uploadSubmission = async (req, res) => {
       fs.unlinkSync(req.file.path);
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: error.message || "Failed to upload submission",
+      message: error.message,
     });
   }
 };
@@ -339,7 +331,6 @@ exports.downloadSubmission = async (req, res) => {
     const { id } = req.params;
 
     const submission = await Submission.findById(id);
-
     if (!submission) {
       return res.status(404).json({ message: "Submission not found" });
     }
@@ -353,25 +344,22 @@ exports.downloadSubmission = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    // STUDENT gets encrypted file
+    // STUDENT: return signed Cloudinary URL format
     if (isStudent) {
-      return res.download(
-        submission.filePath,
-        submission.originalName + ".enc",
-      );
-    }
-
-    // LECTURER gets decrypted ONLY if exists
-    const decryptedPath =
-      submission.filePath.replace(".enc", "") + "_decrypted";
-
-    if (!fs.existsSync(decryptedPath)) {
-      return res.status(400).json({
-        message: "Decrypt file first before download",
+      return res.status(200).json({
+        success: true,
+        download: {
+          url: submission.filePath,
+          filename: submission.originalName + ".enc",
+        },
       });
     }
 
-    return res.download(decryptedPath, submission.originalName);
+    // LECTURER: must decrypt first
+    return res.status(400).json({
+      success: false,
+      message: "Use decrypt endpoint first",
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -399,10 +387,16 @@ exports.deleteSubmission = async (req, res) => {
       });
     }
 
-    if (submission.filePath && fs.existsSync(submission.filePath)) {
-      fs.unlinkSync(submission.filePath);
+    if (submission.cloudinaryId) {
+      await cloudinary.uploader.destroy(submission.cloudinaryId, {
+        resource_type: "raw",
+      });
     }
-
+    if (submission.cloudinaryId) {
+      await cloudinary.uploader.destroy(submission.cloudinaryId, {
+        resource_type: "raw",
+      });
+    }
     await submission.deleteOne();
     res
       .status(200)
