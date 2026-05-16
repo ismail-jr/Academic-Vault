@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import { ThemeProvider } from "./theme-provider";
 import { AuthProvider } from "@/contexts/auth-context";
+import { SubmissionProvider } from "@/contexts/submission-context";
+import { UnderDevelopmentProvider } from "@/components/ui/under-development";
 
 /* ── Typography ──────────────────────────────────────────────
    Playfair Display  → headings (authoritative, academic)
@@ -57,16 +59,18 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         <AuthProvider>
-          {" "}
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange={false}
-          >
-            {children}
-            <Toaster richColors closeButton />
-          </ThemeProvider>
+          <SubmissionProvider>
+            {" "}
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange={false}
+            >
+              <UnderDevelopmentProvider>{children}</UnderDevelopmentProvider>
+              <Toaster richColors closeButton />
+            </ThemeProvider>
+          </SubmissionProvider>
         </AuthProvider>
       </body>
     </html>

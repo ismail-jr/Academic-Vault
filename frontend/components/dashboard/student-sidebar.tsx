@@ -12,6 +12,12 @@ import {
   ChevronDown,
   LayoutDashboardIcon,
   BookLock,
+  ClipboardList,
+  Award,
+  Clock,
+  Bell,
+  HelpCircle,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
@@ -36,9 +42,48 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const studentNav = [
-  { href: "/student/dashboard", label: "dashboard", icon: LayoutDashboardIcon },
-  { href: "/student/submit", label: "Submit", icon: Upload },
-  { href: "/student/submissions", label: "My Submissions", icon: FileLock2 },
+  {
+    href: "/student/dashboard",
+    label: "Overview",
+    icon: LayoutDashboardIcon,
+    description: "Dashboard & Stats",
+  },
+  {
+    href: "/student/submit",
+    label: "Submit Work",
+    icon: Upload,
+    description: "Upload Assignment",
+  },
+  {
+    href: "/student/submissions",
+    label: "My Work",
+    icon: ClipboardList,
+    description: "Track Submissions",
+  },
+  // {
+  //   href: "/student/grades",
+  //   label: "Grades",
+  //   icon: Award,
+  //   description: "View Scores",
+  // },
+  // {
+  //   href: "/student/deadlines",
+  //   label: "Deadlines",
+  //   icon: Clock,
+  //   description: "Upcoming Due Dates",
+  // },
+  // {
+  //   href: "/student/notifications",
+  //   label: "Notifications",
+  //   icon: Bell,
+  //   description: "Updates & Alerts",
+  // },
+  // {
+  //   href: "/student/help",
+  //   label: "Help",
+  //   icon: HelpCircle,
+  //   description: "Support & Guides",
+  // },
 ];
 
 // Helper function to get initials from name
@@ -73,16 +118,18 @@ export function StudentSidebar() {
     }
   };
 
-  // Get user avatar URL (you can replace with actual avatar storage)
-  const getAvatarUrl = () => {
-    // If user has custom avatar, return that
-    // For now, return null to use fallback
-    return null;
+  const getAvatarUrl = () => null;
+
+  const isActiveLink = (href: string) => {
+    if (href === "/student/dashboard") {
+      return pathname === href;
+    }
+    return pathname.startsWith(href);
   };
 
   return (
     <>
-      <aside className="hidden w-72 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+      <aside className="fixed left-0 top-0 z-50 hidden h-screen w-72 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         {/* Logo */}
         <div className="flex h-20 items-center gap-3 border-b border-sidebar-border px-6">
           <div className="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/70 shadow-xl">
@@ -100,33 +147,38 @@ export function StudentSidebar() {
 
         {/* Navigation */}
         <div className="flex flex-1 flex-col justify-between p-4">
-          <nav className="space-y-2">
+          <nav className="space-y-1">
             {studentNav.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href;
+              const isActive = isActiveLink(item.href);
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-all duration-300",
+                    "group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "border-sidebar-ring/40 bg-sidebar-accent text-sidebar-accent-foreground shadow-lg"
-                      : "border-transparent text-sidebar-foreground/70 hover:border-sidebar-border hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                      ? "bg-primary/10 text-primary shadow-sm"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
                   )}
                 >
                   <div
                     className={cn(
-                      "flex size-9 items-center justify-center rounded-xl transition-all",
+                      "flex size-8 items-center justify-center rounded-lg transition-all duration-200",
                       isActive
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "bg-sidebar-accent/40 text-sidebar-foreground/70 group-hover:bg-sidebar-accent",
+                        ? "text-primary"
+                        : "text-sidebar-foreground/70 group-hover:text-sidebar-foreground",
                     )}
                   >
                     <Icon className="size-4" />
                   </div>
-                  <span>{item.label}</span>
+                  <div className="flex-1">
+                    <span className="text-sm">{item.label}</span>
+                    <p className="text-[10px] text-muted-foreground/60">
+                      {item.description}
+                    </p>
+                  </div>
                 </Link>
               );
             })}
@@ -152,7 +204,7 @@ export function StudentSidebar() {
                         {user?.name?.split(" ")[0] || "Student"}
                       </p>
                       <p className="text-xs text-sidebar-foreground/60">
-                        {user?.studentId || "Student"}
+                        {user?.studentId || user?.email || "Student"}
                       </p>
                     </div>
 
@@ -165,7 +217,7 @@ export function StudentSidebar() {
               <DropdownMenuContent className="w-64" align="end" sideOffset={5}>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
+                    <p className="text-sm font-medium leading-none text-foreground">
                       {user?.name || "Student User"}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
@@ -189,7 +241,7 @@ export function StudentSidebar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setShowLogoutDialog(true)}
-                  className="cursor-pointer text-red-600 focus:text-red-600"
+                  className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 size-4" />
                   <span>Logout</span>

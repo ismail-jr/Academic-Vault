@@ -107,10 +107,10 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen w-full overflow-hidden bg-background text-foreground">
+    <div className="ml-0 flex min-w-0 flex-1 flex-col lg:ml-72">
+      {" "}
       {/* SIDEBAR */}
       {getSidebar()}
-
       {/* MAIN CONTENT */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* HEADER */}

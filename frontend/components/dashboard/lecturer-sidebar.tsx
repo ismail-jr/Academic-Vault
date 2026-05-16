@@ -11,6 +11,12 @@ import {
   ChevronDown,
   LayoutDashboardIcon,
   BookLock,
+  ClipboardList,
+  GraduationCap,
+  BarChart3,
+  MessageSquare,
+  Users,
+  Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
@@ -37,10 +43,46 @@ import { toast } from "sonner";
 const lecturerNav = [
   {
     href: "/lecturer/dashboard",
-    label: "Dashboard",
+    label: "Overview",
     icon: LayoutDashboardIcon,
+    description: "Dashboard & Stats",
   },
-  { href: "/lecturer/submissions", label: "Submissions", icon: FileLock2 },
+  {
+    href: "/lecturer/submissions",
+    label: "Student Work",
+    icon: ClipboardList,
+    description: "Review & Grade",
+  },
+  // {
+  //   href: "/lecturer/courses",
+  //   label: "My Courses",
+  //   icon: BookLock,
+  //   description: "Manage Courses",
+  // },
+  // {
+  //   href: "/lecturer/students",
+  //   label: "Students",
+  //   icon: Users,
+  //   description: "View Enrolled",
+  // },
+  // {
+  //   href: "/lecturer/analytics",
+  //   label: "Analytics",
+  //   icon: BarChart3,
+  //   description: "Performance",
+  // },
+  // {
+  //   href: "/lecturer/feedback",
+  //   label: "Feedback",
+  //   icon: MessageSquare,
+  //   description: "Student Reviews",
+  // },
+  // {
+  //   href: "/lecturer/grades",
+  //   label: "Gradebook",
+  //   icon: Award,
+  //   description: "Final Grades",
+  // },
 ];
 
 const getInitials = (name: string) =>
@@ -74,9 +116,16 @@ export function LecturerSidebar() {
 
   const getAvatarUrl = () => null;
 
+  const isActiveLink = (href: string) => {
+    if (href === "/lecturer/dashboard") {
+      return pathname === href;
+    }
+    return pathname.startsWith(href);
+  };
+
   return (
     <>
-      <aside className="hidden w-72 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+      <aside className="fixed left-0 top-0 z-50 hidden h-screen w-72 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         {/* Logo */}
         <div className="flex h-20 items-center gap-3 border-b border-sidebar-border px-6">
           <div className="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/70 shadow-xl">
@@ -94,33 +143,38 @@ export function LecturerSidebar() {
 
         {/* Navigation */}
         <div className="flex flex-1 flex-col justify-between p-4">
-          <nav className="space-y-2">
+          <nav className="space-y-1">
             {lecturerNav.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href;
+              const isActive = isActiveLink(item.href);
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-all duration-200",
+                    "group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "border-sidebar-ring/40 bg-sidebar-accent text-sidebar-accent-foreground shadow-lg"
-                      : "border-transparent text-sidebar-foreground/70 hover:border-sidebar-border hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                      ? "bg-primary/10 text-primary shadow-sm"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
                   )}
                 >
                   <div
                     className={cn(
-                      "flex size-9 items-center justify-center rounded-xl transition-all duration-200",
+                      "flex size-8 items-center justify-center rounded-lg transition-all duration-200",
                       isActive
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "bg-sidebar-accent/40 text-sidebar-foreground/70 group-hover:bg-sidebar-accent group-hover:text-sidebar-foreground",
+                        ? "text-primary"
+                        : "text-sidebar-foreground/70 group-hover:text-sidebar-foreground",
                     )}
                   >
                     <Icon className="size-4" />
                   </div>
-                  <span>{item.label}</span>
+                  <div className="flex-1">
+                    <span className="text-sm">{item.label}</span>
+                    <p className="text-[10px] text-muted-foreground/60">
+                      {item.description}
+                    </p>
+                  </div>
                 </Link>
               );
             })}
