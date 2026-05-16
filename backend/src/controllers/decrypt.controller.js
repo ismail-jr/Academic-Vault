@@ -13,17 +13,16 @@ exports.decryptSubmission = async (req, res) => {
       return res.status(404).json({ message: "Submission not found" });
     }
 
-    // only assigned lecturer can decrypt
     if (submission.lecturer.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Access denied" });
     }
 
     const lecturer = await User.findById(req.user._id);
 
-    // STEP 1: decrypt AES key
+    // STEP 1
     const aesKey = decryptAESKey(submission.encryptedKey, lecturer.privateKey);
 
-    // STEP 2: decrypt file
+    // STEP 2
     const decryptedPath =
       submission.filePath.replace(".enc", "") + "_decrypted";
 
@@ -34,7 +33,18 @@ exports.decryptSubmission = async (req, res) => {
       submission.iv,
     );
 
-    res.download(decryptedPath, submission.originalName);
+    // 🔐 NEW: send steps before download
+    return res.status(200).json({
+      success: true,
+      message: "Decryption successful",
+      steps: [
+        "Encrypted AES key retrieved",
+        "AES key decrypted using RSA private key",
+        "File decrypted using AES",
+        "File ready for download",
+      ],
+      downloadUrl: `/api/submissions/${submissionId}/download-decrypted`,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

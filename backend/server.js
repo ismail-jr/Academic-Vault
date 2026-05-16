@@ -2,9 +2,11 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./src/config/db");
+
+const authRoutes = require("./src/routes/auth.routes");
 const testRoutes = require("./src/routes/test.routes");
 const submissionRoutes = require("./src/routes/submission.routes");
-const decryptRoutes = require("./src/routes/decrypt.routes");
+const userRoutes = require("./src/routes/user.routes");
 
 const app = express();
 
@@ -15,15 +17,12 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-// Routes
-const authRoutes = require("./src/routes/auth.routes");
-
 app.use("/api/auth", authRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/submissions", submissionRoutes);
-app.use("/api/decrypt", decryptRoutes);
+app.use("/api/user", userRoutes);
 
-// Health check
+// Root Health Check
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
