@@ -29,6 +29,14 @@ const submissionSchema = new mongoose.Schema(
       type: String,
       required: [true, "Initialization vector is required"],
     },
+    isDecrypted: {
+      type: Boolean,
+      default: false,
+    },
+
+    decryptedAt: {
+      type: Date,
+    },
     status: {
       type: String,
       enum: ["submitted", "encrypted", "viewed", "graded"],

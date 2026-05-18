@@ -55,7 +55,7 @@ exports.uploadSubmission = async (req, res) => {
       success: true,
       message: "File encrypted and uploaded successfully",
 
-      // 🔐 NEW: security info for UI
+      //  NEW: security info for UI
       security: {
         steps: [
           "File received",
@@ -177,7 +177,7 @@ exports.getSubmissionById = async (req, res) => {
       success: true,
       submission,
 
-      // 🔐 NEW
+      //  NEW
       security: {
         encrypted: submission.status === "encrypted",
         algorithm: "AES-256 + RSA",
@@ -341,7 +341,9 @@ exports.downloadSubmission = async (req, res) => {
     const submission = await Submission.findById(id);
 
     if (!submission) {
-      return res.status(404).json({ message: "Submission not found" });
+      return res.status(404).json({
+        message: "Submission not found",
+      });
     }
 
     const isStudent = submission.student.toString() === req.user._id.toString();
@@ -350,30 +352,20 @@ exports.downloadSubmission = async (req, res) => {
       submission.lecturer.toString() === req.user._id.toString();
 
     if (!isStudent && !isLecturer) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-
-    // STUDENT gets encrypted file
-    if (isStudent) {
-      return res.download(
-        submission.filePath,
-        submission.originalName + ".enc",
-      );
-    }
-
-    // LECTURER gets decrypted ONLY if exists
-    const decryptedPath =
-      submission.filePath.replace(".enc", "") + "_decrypted";
-
-    if (!fs.existsSync(decryptedPath)) {
-      return res.status(400).json({
-        message: "Decrypt file first before download",
+      return res.status(403).json({
+        message: "Not authorized",
       });
     }
 
-    return res.download(decryptedPath, submission.originalName);
+    // BOTH student and lecturer get encrypted file here
+    return res.download(
+      submission.filePath,
+      `${submission.originalName || "encrypted-file"}.enc`,
+    );
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
@@ -401,6 +393,14 @@ exports.deleteSubmission = async (req, res) => {
 
     if (submission.filePath && fs.existsSync(submission.filePath)) {
       fs.unlinkSync(submission.filePath);
+    }
+
+    // Remove temporary decrypted file too
+    const decryptedPath =
+      submission.filePath.replace(".enc", "") + "_decrypted";
+
+    if (fs.existsSync(decryptedPath)) {
+      fs.unlinkSync(decryptedPath);
     }
 
     await submission.deleteOne();

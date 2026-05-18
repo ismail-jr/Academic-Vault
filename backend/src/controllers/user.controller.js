@@ -6,7 +6,7 @@ exports.getLecturers = async (req, res) => {
   try {
     const lecturers = await User.find(
       { role: "lecturer", isActive: true },
-      "name email _id", // Only return necessary fields
+      "name email _id",
     ).sort({ name: 1 });
 
     res.status(200).json({

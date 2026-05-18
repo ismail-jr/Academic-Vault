@@ -3,8 +3,6 @@ const express = require("express");
 const router = express.Router();
 const { protect, authorizeRoles } = require("../middleware/auth.middleware");
 const upload = require("../middleware/upload.middleware");
-const fs = require("fs");
-const Submission = require("../models/Submission");
 
 const {
   uploadSubmission,
@@ -17,11 +15,17 @@ const {
   downloadSubmission,
   deleteSubmission,
   updateSubmissionStatus,
+  getSubmissionByStudent,
 } = require("../controllers/submission.controller");
 
-const { decryptSubmission } = require("../controllers/decrypt.controller");
+const {
+  decryptSubmission,
+  downloadDecrypted,
+} = require("../controllers/decrypt.controller");
 
 // ==================== STUDENT ROUTES ====================
+
+// Upload a new submission (encrypted server-side after upload)
 router.post(
   "/upload",
   protect,
@@ -30,6 +34,7 @@ router.post(
   uploadSubmission,
 );
 
+// Get all submissions for the logged-in student
 router.get(
   "/my-submissions",
   protect,
@@ -37,7 +42,17 @@ router.get(
   getMySubmissions,
 );
 
+// Get all submissions for a specific student (student can only view own)
+router.get(
+  "/student/:studentId/all",
+  protect,
+  authorizeRoles("student", "lecturer"),
+  getSubmissionByStudent,
+);
 // ==================== LECTURER ROUTES ====================
+
+// Get all submissions assigned to the logged-in lecturer
+// Supports query params: ?status=&courseCode=&search=
 router.get(
   "/lecturer/submissions",
   protect,
@@ -45,6 +60,7 @@ router.get(
   getLecturerSubmissions,
 );
 
+// Get submission statistics for the lecturer
 router.get(
   "/lecturer/stats",
   protect,
@@ -52,8 +68,13 @@ router.get(
   getSubmissionStats,
 );
 
+// Grade a submission (adds grade + feedback, sets status to "graded")
 router.post("/:id/grade", protect, authorizeRoles("lecturer"), gradeSubmission);
+
+// Mark a submission as viewed (sets status to "viewed")
 router.post("/:id/view", protect, authorizeRoles("lecturer"), markAsViewed);
+
+// Update submission status manually
 router.patch(
   "/:id/status",
   protect,
@@ -62,7 +83,8 @@ router.patch(
 );
 
 // ==================== CRYPTOGRAPHY ROUTES ====================
-// Decrypt submission (lecturer only)
+
+// Decrypt the submission — stores decrypted file on server (lecturer only)
 router.post(
   "/:id/decrypt",
   protect,
@@ -70,61 +92,29 @@ router.post(
   decryptSubmission,
 );
 
-// Download decrypted file (lecturer only)
+// Download the decrypted file — must call /:id/decrypt first (lecturer only)
 router.get(
   "/:id/download-decrypted",
   protect,
   authorizeRoles("lecturer"),
-  async (req, res) => {
-    try {
-      const submission = await Submission.findById(req.params.id);
-      if (!submission)
-        return res.status(404).json({ message: "Submission not found" });
-      if (submission.lecturer.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-      const decryptedPath =
-        submission.filePath.replace(".enc", "") + "_decrypted";
-      if (!fs.existsSync(decryptedPath)) {
-        return res.status(404).json({ message: "Decrypted file not found" });
-      }
-      res.download(decryptedPath, submission.originalName);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  },
+  downloadDecrypted,
 );
 
 // ==================== SHARED ROUTES ====================
-// Download encrypted file (student or lecturer)
-router.get("/:id/download", protect, async (req, res, next) => {
-  try {
-    const submission = await Submission.findById(req.params.id);
+// IMPORTANT: specific sub-paths above must be defined before the generic /:id routes
 
-    if (!submission) {
-      return res.status(404).json({ message: "Submission not found" });
-    }
+// Download file:
+//   Student  → gets the encrypted .enc file
+//   Lecturer → gets the decrypted file (only if /:id/decrypt was called first)
+// Auth is handled inside downloadSubmission — no duplicate check needed here.
+router.get("/:id/download", protect, downloadSubmission);
 
-    // allow only owner OR lecturer
-    const isStudentOwner =
-      submission.student.toString() === req.user._id.toString();
-
-    const isLecturerOwner =
-      submission.lecturer.toString() === req.user._id.toString();
-
-    if (!isStudentOwner && !isLecturerOwner) {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    return downloadSubmission(req, res, next);
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-});
-// Get submission by ID (student or lecturer with authorization)
+// Get a single submission by ID
+// Student sees own submissions; lecturer sees submissions assigned to them
 router.get("/:id", protect, getSubmissionById);
 
-// Delete submission (student or lecturer with authorization)
+// Delete a submission
+// Student can delete own; lecturer can delete submissions assigned to them
 router.delete("/:id", protect, deleteSubmission);
 
 module.exports = router;
