@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Academic Vault
+
+Secure assignment submission system with encryption, lecturer review, grading, and file protection.
+
+---
+
+## Features
+
+- Student file submission
+- Lecturer review dashboard
+- AES-256 + RSA encryption flow
+- Secure file storage (local uploads)
+- Decryption before review
+- PDF preview support for decrypted files
+- Grading and feedback system
+- Role-based access control (student, lecturer)
+
+---
+
+## Tech Stack
+
+- Next.js (App Router)
+- Node.js
+- Express
+- MongoDB
+- Multer (file upload)
+- Crypto (AES + RSA encryption)
+- Tailwind CSS
+
+---
+
+## Project Structure
+
+- `/app` Next.js routes
+- `/components` UI components
+- `/contexts` global state
+- `/lib/api` API layer
+- `/backend` Express server
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+---
+
+### 2. Run backend server
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Backend runs on:
+
+```
+http://localhost:5000
+```
+
+---
+
+### 3. Run frontend
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Frontend runs on:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+Create `.env.local` in frontend:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Create `.env` in backend:
 
-## Deploy on Vercel
+```env
+MONGO_URI=your_mongodb_url
+JWT_SECRET=your_secret
+PORT=5000
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## File Upload System
+
+- Files stored locally in `/uploads`
+- Encrypted before storage
+- Only decrypted on lecturer request
+- No external storage services required
+
+---
+
+## Security Model
+
+- RSA encrypts AES key
+- AES encrypts file content
+- Lecturer private key decrypts AES key
+- File only becomes readable after decryption step
+- Download and preview locked until decrypted
+
+---
+
+## API Overview
+
+### Auth
+
+- POST `/auth/login`
+- POST `/auth/register`
+
+---
+
+## Running Notes
+
+- Ensure backend runs before frontend
+- Ensure `/uploads` folder exists
+- Do not delete encrypted files manually
+- Decryption is idempotent (runs once per file)
+
+---
+
+## Deployment
+
+- coming soon
+
+---
