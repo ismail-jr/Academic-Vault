@@ -5,40 +5,78 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { FileLock2, Star, Eye, ArrowRight } from "lucide-react";
+import {
+  FileLock2,
+  Star,
+  Eye,
+  ArrowRight,
+  CheckCircle,
+  Clock,
+  Lock,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Submission } from "@/contexts/submission-context";
+import { Submission, SubmissionStatus } from "@/contexts/submission-context";
 import { formatDistanceToNow } from "date-fns";
 
 interface RecentSubmissionsProps {
   submissions: Submission[];
 }
 
-const getStatusConfig = (status: Submission["status"]) => {
-  const config = {
-    submitted: {
-      color: "bg-yellow-500/10 text-yellow-600 border-yellow-200",
-      label: "PENDING",
-    },
-    encrypted: {
-      color: "bg-blue-500/10 text-blue-600 border-blue-200",
-      label: "PROCESSING",
-    },
-    viewed: {
-      color: "bg-purple-500/10 text-purple-600 border-purple-200",
-      label: "VIEWED",
-    },
-    graded: {
-      color: "bg-green-500/10 text-green-600 border-green-200",
-      label: "GRADED",
-    },
-  };
-  return config[status];
+const statusConfig: Record<
+  SubmissionStatus,
+  {
+    icon: any;
+    label: string;
+    color: string;
+  }
+> = {
+  submitted: {
+    icon: Clock,
+    label: "PENDING",
+    color: "bg-yellow-500/10 text-yellow-600 border-yellow-200",
+  },
+
+  encrypted: {
+    icon: Lock,
+    label: "ENCRYPTED",
+    color: "bg-blue-500/10 text-blue-600 border-blue-200",
+  },
+
+  viewed: {
+    icon: Eye,
+    label: "VIEWED",
+    color: "bg-purple-500/10 text-purple-600 border-purple-200",
+  },
+
+  graded: {
+    icon: CheckCircle,
+    label: "GRADED",
+    color: "bg-green-500/10 text-green-600 border-green-200",
+  },
+
+  returned: {
+    icon: CheckCircle,
+    label: "RETURNED",
+    color: "bg-orange-500/10 text-orange-600 border-orange-200",
+  },
 };
 
-const getStatusProgress = (status: Submission["status"]) => {
-  const steps = ["submitted", "encrypted", "viewed", "graded"];
+const getStatusConfig = (status: SubmissionStatus) => {
+  return statusConfig[status] || statusConfig.submitted;
+};
+
+const getStatusProgress = (status: SubmissionStatus) => {
+  const steps: SubmissionStatus[] = [
+    "submitted",
+    "encrypted",
+    "viewed",
+    "graded",
+  ];
+
   const currentIndex = steps.indexOf(status);
+
+  if (currentIndex === -1) return 0;
+
   return ((currentIndex + 1) / steps.length) * 100;
 };
 
@@ -47,19 +85,23 @@ export function StudentRecentSubmissions({
 }: RecentSubmissionsProps) {
   if (submissions.length === 0) {
     return (
-      <Card className="rounded-2xl p-12 text-center border-primary/20">
-        <FileLock2 className="mx-auto size-12 text-muted-foreground mb-4 opacity-30" />
-        <p className="text-sm font-mono text-muted-foreground">
+      <Card className="rounded-2xl border border-border p-12 text-center shadow-sm">
+        <FileLock2 className="mx-auto mb-4 size-12 text-muted-foreground/40" />
+
+        <p className="font-mono text-sm text-muted-foreground">
           NO_SUBMISSIONS_FOUND
         </p>
-        <p className="text-xs text-muted-foreground mt-1">
+
+        <p className="mt-1 text-xs text-muted-foreground">
           Submit your first assignment
         </p>
-        <Link href="/student/submit">
-          <Button variant="link" className="mt-4 gap-2 font-mono text-xs">
-            SUBMIT_NOW <ArrowRight className="size-3" />
-          </Button>
-        </Link>
+
+        <Button asChild variant="link" className="mt-4 gap-2 font-mono text-xs">
+          <Link href="/student/submit">
+            SUBMIT_NOW
+            <ArrowRight className="size-3" />
+          </Link>
+        </Button>
       </Card>
     );
   }
@@ -67,97 +109,108 @@ export function StudentRecentSubmissions({
   return (
     <div className="space-y-4">
       {submissions.map((submission) => {
-        const statusConfig = getStatusConfig(submission.status);
+        const currentStatus = getStatusConfig(submission.status);
+        const StatusIcon = currentStatus.icon;
         const progress = getStatusProgress(submission.status);
 
         return (
           <Card
             key={submission._id}
-            className="group rounded-2xl overflow-hidden border-primary/20 hover:shadow-lg transition-all duration-300"
+            className="group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
           >
             <div className="relative p-5">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              {/* hover glow */}
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.02] via-primary/[0.05] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-              <div className="relative flex flex-wrap items-start justify-between gap-3 mb-4">
-                <div className="flex flex-wrap gap-2">
-                  <Badge
-                    className={cn(
-                      "gap-1 font-mono text-xs",
-                      statusConfig.color,
-                    )}
-                  >
-                    {statusConfig.label}
-                  </Badge>
-                  {submission.grade && (
+              <div className="relative">
+                {/* TOP */}
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge
-                      variant="outline"
-                      className="gap-1 bg-green-500/10 text-green-600 border-green-200 font-mono text-xs"
+                      className={cn(
+                        "gap-1 rounded-md border font-mono text-[10px]",
+                        currentStatus.color,
+                      )}
                     >
-                      <Star className="size-3" />
-                      GRADE: {submission.grade}%
+                      <StatusIcon className="size-3" />
+                      {currentStatus.label}
                     </Badge>
-                  )}
-                </div>
-                <span className="text-[10px] font-mono text-muted-foreground">
-                  {formatDistanceToNow(new Date(submission.createdAt), {
-                    addSuffix: true,
-                  })}
-                </span>
-              </div>
 
-              <div>
-                <h3 className="font-mono font-semibold text-lg tracking-tight">
-                  {submission.assignmentTitle || "Untitled Assignment"}
-                </h3>
-                <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                  <span className="font-mono text-xs">
-                    {submission.courseCode} - {submission.courseName}
+                    {submission.grade !== undefined && (
+                      <Badge
+                        variant="outline"
+                        className="gap-1 border-green-200 bg-green-500/10 font-mono text-[10px] text-green-600"
+                      >
+                        <Star className="size-3" />
+                        GRADE: {submission.grade}%
+                      </Badge>
+                    )}
+                  </div>
+
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    {formatDistanceToNow(new Date(submission.createdAt), {
+                      addSuffix: true,
+                    })}
                   </span>
                 </div>
-                <p className="text-xs font-mono text-muted-foreground mt-1">
-                  Lecturer: {submission.lecturer?.name || "Unknown"}
-                </p>
-              </div>
 
-              {/* Progress indicator */}
-              {(submission.status === "submitted" ||
-                submission.status === "encrypted") && (
-                <div className="mt-3">
-                  <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
-                    <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                {/* CONTENT */}
+                <div className="space-y-2">
+                  <h3 className="line-clamp-1 text-lg font-semibold tracking-tight">
+                    {submission.assignmentTitle || "Untitled Assignment"}
+                  </h3>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <span className="font-medium">{submission.courseCode}</span>
+
+                    <span className="hidden sm:inline">•</span>
+
+                    <span>{submission.courseName}</span>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    Lecturer:{" "}
+                    <span className="font-medium">
+                      {submission.lecturer?.name || "Unknown"}
+                    </span>
+                  </p>
+                </div>
+
+                {/* PROGRESS */}
+                {(submission.status === "submitted" ||
+                  submission.status === "encrypted") && (
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-muted-foreground">
+                        PROCESSING
+                      </span>
+
+                      <span className="text-[10px] font-mono text-muted-foreground">
+                        {Math.round(progress)}%
+                      </span>
+                    </div>
+
+                    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full bg-primary rounded-full transition-all duration-500"
+                        className="h-full rounded-full bg-primary transition-all duration-500"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                    <span>{statusConfig.label}</span>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Feedback preview */}
-              {submission.feedback && (
-                <div className="mt-3 rounded-lg bg-primary/5 p-3 border border-primary/10">
-                  <p className="text-[10px] font-mono text-muted-foreground mb-1">
-                    LECTURER_FEEDBACK:
-                  </p>
-                  <p className="text-xs font-mono line-clamp-2">
-                    {submission.feedback}
-                  </p>
-                </div>
-              )}
+                {/* FEEDBACK */}
+                {submission.feedback && (
+                  <div className="mt-4 rounded-xl border border-border bg-muted/40 p-4">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Lecturer Feedback
+                    </p>
 
-              <div className="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-primary/10">
-                <Link href={`/student/submissions/${submission._id}`}>
-                  <Button
-                    size="sm"
-                    className="gap-2 font-mono text-xs group-hover:shadow-lg transition-all"
-                  >
-                    <Eye className="size-3" />
-                    VIEW_DETAILS
-                    <ArrowRight className="size-3" />
-                  </Button>
-                </Link>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">
+                      {submission.feedback}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
