@@ -57,7 +57,10 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${playfair.variable} ${dmSans.variable} ${geistMono.variable}`}
     >
-      <body className="min-h-screen bg-background text-foreground font-sans antialiased">
+      <body
+        className="min-h-screen bg-background text-foreground font-sans antialiased"
+        suppressHydrationWarning={true}
+      >
         <AuthProvider>
           <SubmissionProvider>
             {" "}
