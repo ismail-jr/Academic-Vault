@@ -4,8 +4,6 @@
 import Link from "next/link";
 import { Terminal, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Shield } from "lucide-react";
 
 interface TerminalHeaderProps {
   submissionId: string;

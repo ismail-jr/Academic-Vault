@@ -1,4 +1,4 @@
-// app/lecturer/submissions/page.tsx (updated with view toggle)
+// app/lecturer/submissions/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -127,6 +127,8 @@ export default function LecturerSubmissionsPage() {
       <TerminalHeader
         title="~/lecturer/submissions"
         subtitle={`Status: ONLINE | Submissions: ${stats.total}`}
+        onRefresh={fetchSubmissions}
+        isRefreshing={loading}
       />
 
       {/* Stats Cards */}

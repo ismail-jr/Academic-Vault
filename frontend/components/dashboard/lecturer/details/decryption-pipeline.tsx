@@ -1,10 +1,8 @@
-// components/dashboard/lecturer/details/decryption-pipeline.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  Check,
   KeyRound,
   Lock,
   ShieldCheck,
@@ -14,7 +12,9 @@ import {
   ArrowRight,
   CheckCircle,
   Shield,
+  Check,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 type Stage = "idle" | "rsa" | "aes" | "done";
@@ -23,6 +23,8 @@ interface DecryptionPipelineProps {
   stage: Stage;
   decrypting: boolean;
   decryptedContent: string;
+  decryptionSteps?: string[];
+  isDecrypted?: boolean;
   onDecrypt: () => void;
 }
 
@@ -30,179 +32,187 @@ export function DecryptionPipeline({
   stage,
   decrypting,
   decryptedContent,
+  decryptionSteps,
+  isDecrypted = false,
   onDecrypt,
 }: DecryptionPipelineProps) {
+  const canDecrypt = !decrypting && !isDecrypted;
+
   return (
-    <Card className="rounded-2xl overflow-hidden border-primary/20 bg-gradient-to-br from-background via-background to-primary/5">
+    <Card className="overflow-hidden rounded-2xl border-primary/20 bg-gradient-to-br from-background via-background to-primary/5">
       <div className="p-6">
-        <h3 className="text-sm font-mono font-semibold mb-4 flex items-center gap-2">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold font-mono">
           <Shield className="size-4 text-primary" />
           CRYPTOGRAPHIC_DECRYPTION_PIPELINE
         </h3>
 
         <div className="relative">
-          <div className="absolute left-5 top-8 bottom-8 w-px bg-gradient-to-b from-primary/50 via-primary/20 to-transparent" />
+          <div className="absolute top-8 bottom-8 left-5 w-px bg-gradient-to-b from-primary/50 via-primary/20 to-transparent" />
 
-          {/* Step 1: RSA */}
-          <div className="relative flex items-start gap-4 mb-8">
+          {/* STEP 1 */}
+          <div className="relative mb-8 flex items-start gap-4">
             <div
               className={cn(
-                "relative z-10 size-10 rounded-full border-2 flex items-center justify-center transition-all duration-300",
+                "relative z-10 flex size-10 items-center justify-center rounded-full border-2",
                 stage === "rsa" &&
-                  "border-primary bg-primary/20 shadow-lg shadow-primary/30 animate-pulse",
-                stage === "aes" || stage === "done"
-                  ? "border-green-500 bg-green-500/20"
-                  : "border-muted-foreground/30 bg-background",
+                  !isDecrypted &&
+                  "animate-pulse border-primary bg-primary/20",
+                isDecrypted && "border-green-500 bg-green-500/20",
+                !stage && "border-muted-foreground/30 bg-background",
               )}
             >
-              {stage === "aes" || stage === "done" ? (
+              {isDecrypted ? (
                 <Check className="size-4 text-green-500" />
               ) : (
-                <KeyRound
-                  className={cn(
-                    "size-4",
-                    stage === "rsa" ? "text-primary" : "text-muted-foreground",
-                  )}
-                />
+                <KeyRound className="size-4 text-muted-foreground" />
               )}
             </div>
+
             <div className="flex-1 pt-1">
-              <p
-                className={cn(
-                  "font-mono text-sm font-semibold",
-                  stage === "rsa" && "text-primary",
-                )}
-              >
+              <p className="text-sm font-semibold font-mono">
                 RSA-2048_DECRYPTION
               </p>
+
               <p className="text-[10px] font-mono text-muted-foreground">
-                Decrypting AES-256 key using lecturer's private key
+                Decrypting AES key using private key
               </p>
-              {stage === "rsa" && (
-                <div className="mt-2 h-1 w-32 bg-primary/20 rounded-full overflow-hidden">
-                  <div className="h-full w-3/4 bg-primary rounded-full animate-pulse" />
+
+              {stage === "rsa" && decrypting && !isDecrypted && (
+                <div className="mt-2 h-1 w-32 overflow-hidden rounded-full bg-primary/20">
+                  <div className="h-full w-3/4 animate-pulse bg-primary" />
                 </div>
               )}
             </div>
-            {stage === "rsa" && (
-              <Zap className="size-4 text-primary animate-pulse" />
+
+            {stage === "rsa" && decrypting && (
+              <Zap className="size-4 animate-pulse text-primary" />
             )}
           </div>
 
-          {/* Step 2: AES */}
-          <div className="relative flex items-start gap-4 mb-8">
+          {/* STEP 2 */}
+          <div className="relative mb-8 flex items-start gap-4">
             <div
               className={cn(
-                "relative z-10 size-10 rounded-full border-2 flex items-center justify-center transition-all duration-300",
+                "relative z-10 flex size-10 items-center justify-center rounded-full border-2",
                 stage === "aes" &&
-                  "border-primary bg-primary/20 shadow-lg shadow-primary/30 animate-pulse",
-                stage === "done"
-                  ? "border-green-500 bg-green-500/20"
-                  : "border-muted-foreground/30 bg-background",
+                  !isDecrypted &&
+                  "animate-pulse border-primary bg-primary/20",
+                isDecrypted && "border-green-500 bg-green-500/20",
+                !stage && "border-muted-foreground/30 bg-background",
               )}
             >
-              {stage === "done" ? (
+              {isDecrypted ? (
                 <Check className="size-4 text-green-500" />
               ) : (
-                <Lock
-                  className={cn(
-                    "size-4",
-                    stage === "aes" ? "text-primary" : "text-muted-foreground",
-                  )}
-                />
+                <Lock className="size-4 text-muted-foreground" />
               )}
             </div>
+
             <div className="flex-1 pt-1">
-              <p
-                className={cn(
-                  "font-mono text-sm font-semibold",
-                  stage === "aes" && "text-primary",
-                )}
-              >
+              <p className="text-sm font-semibold font-mono">
                 AES-256_GCM_DECRYPTION
               </p>
+
               <p className="text-[10px] font-mono text-muted-foreground">
-                Decrypting file content using authenticated encryption
+                Decrypting file content
               </p>
-              {stage === "aes" && (
-                <div className="mt-2 h-1 w-32 bg-primary/20 rounded-full overflow-hidden">
-                  <div className="h-full w-1/2 bg-primary rounded-full animate-pulse" />
+
+              {stage === "aes" && decrypting && !isDecrypted && (
+                <div className="mt-2 h-1 w-32 overflow-hidden rounded-full bg-primary/20">
+                  <div className="h-full w-1/2 animate-pulse bg-primary" />
                 </div>
               )}
             </div>
-            {stage === "aes" && (
-              <Zap className="size-4 text-primary animate-pulse" />
+
+            {stage === "aes" && decrypting && (
+              <Zap className="size-4 animate-pulse text-primary" />
             )}
           </div>
 
-          {/* Step 3: Complete */}
+          {/* STEP 3 */}
           <div className="relative flex items-start gap-4">
             <div
               className={cn(
-                "relative z-10 size-10 rounded-full border-2 flex items-center justify-center transition-all duration-300",
-                stage === "done" &&
-                  "border-green-500 bg-green-500/20 shadow-lg shadow-green-500/30",
-                "border-muted-foreground/30 bg-background",
+                "relative z-10 flex size-10 items-center justify-center rounded-full border-2",
+                isDecrypted && "border-green-500 bg-green-500/20",
+                "border-muted-foreground/30",
               )}
             >
-              {stage === "done" ? (
+              {isDecrypted ? (
                 <Check className="size-4 text-green-500" />
               ) : (
                 <ShieldCheck className="size-4 text-muted-foreground" />
               )}
             </div>
+
             <div className="flex-1 pt-1">
-              <p
-                className={cn(
-                  "font-mono text-sm font-semibold",
-                  stage === "done" && "text-green-500",
-                )}
-              >
-                VERIFICATION_COMPLETE
-              </p>
+              <p className="text-sm font-semibold font-mono">VERIFICATION</p>
+
               <p className="text-[10px] font-mono text-muted-foreground">
-                File ready for review and grading
+                File ready for grading
               </p>
             </div>
-            {stage === "done" && (
-              <CheckCircle className="size-4 text-green-500" />
-            )}
+
+            {isDecrypted && <CheckCircle className="size-4 text-green-500" />}
           </div>
         </div>
 
-        {stage !== "done" && (
-          <Button
-            onClick={onDecrypt}
-            disabled={decrypting || stage !== "idle"}
-            className="mt-6 w-full gap-2 font-mono"
-            variant={decrypting ? "secondary" : "default"}
-          >
-            {decrypting ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                DECRYPTING...
-              </>
-            ) : (
-              <>
-                <Unlock className="size-4" />
-                INITIATE_DECRYPTION_SEQUENCE
-                <ArrowRight className="size-4" />
-              </>
-            )}
-          </Button>
-        )}
+        {/* ACTION BUTTON */}
+        <Button
+          onClick={onDecrypt}
+          disabled={!canDecrypt}
+          className="mt-6 w-full gap-2 font-mono text-sm cursor-pointer hover:bg-primary/90 transition-all duration-200"
+        >
+          {decrypting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Decrypting...
+            </>
+          ) : isDecrypted ? (
+            <>
+              <CheckCircle className="size-4" />
+              Already Decrypted
+            </>
+          ) : (
+            <>
+              <Unlock className="size-4" />
+              Start Decryption
+              <ArrowRight className="size-4" />
+            </>
+          )}
+        </Button>
 
-        {stage === "done" && decryptedContent && (
-          <div className="mt-6 p-4 rounded-lg bg-green-500/10 border border-green-500/30 animate-in zoom-in-95 duration-300">
-            <div className="flex items-center gap-2 mb-3">
+        {/* OUTPUT */}
+        {isDecrypted && decryptedContent && (
+          <div className="mt-6 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
+            <div className="mb-2 flex items-center gap-2">
               <CheckCircle className="size-4 text-green-500" />
-              <span className="text-xs font-mono font-semibold text-green-500">
-                DECRYPTION_SUCCESSFUL
+              <span className="text-xs font-mono text-green-600">
+                DECRYPTED
               </span>
             </div>
-            <pre className="text-xs font-mono bg-black/20 p-3 rounded overflow-auto max-h-64 whitespace-pre-wrap">
+
+            <pre className="text-xs font-mono whitespace-pre-wrap">
               {decryptedContent}
             </pre>
+          </div>
+        )}
+
+        {/* STATUS */}
+        {isDecrypted && (
+          <div className="mt-4 rounded-lg border border-green-500/20 bg-green-500/5 p-3">
+            <p className="text-sm text-green-600 font-mono">
+              Decryption completed. Ready for grading.
+            </p>
+
+            {decryptionSteps?.map((s, i) => (
+              <p
+                key={i}
+                className="text-[10px] font-mono text-muted-foreground"
+              >
+                ✓ {s}
+              </p>
+            ))}
           </div>
         )}
       </div>

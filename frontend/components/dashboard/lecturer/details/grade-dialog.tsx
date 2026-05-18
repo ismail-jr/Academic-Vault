@@ -71,7 +71,7 @@ export function GradeDialog({
               value={feedback}
               onChange={(e) => onFeedbackChange(e.target.value)}
               className="font-mono text-sm min-h-[120px]"
-              placeholder="Excellent work! Your analysis was thorough..."
+              placeholder="Excellent work..."
             />
           </div>
         </div>

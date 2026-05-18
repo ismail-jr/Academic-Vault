@@ -166,7 +166,7 @@ export function RecentSubmissionsCard({
                 <Link href={`/lecturer/submissions/${submission._id}`}>
                   <Button
                     size="sm"
-                    className="gap-2 font-mono text-xs group-hover:shadow-lg transition-all"
+                    className="gap-2 font-mono text-sm cursor-pointer hover:bg-primary/90 transition-all duration-200"
                   >
                     <Eye className="size-3" />
                     REVIEW

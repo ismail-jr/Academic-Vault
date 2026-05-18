@@ -19,8 +19,6 @@ import {
   KeyRound,
   Lock,
   ArrowRight,
-  LayoutGrid,
-  Rows,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

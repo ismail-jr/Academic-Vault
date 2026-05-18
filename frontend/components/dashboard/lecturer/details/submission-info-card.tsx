@@ -1,4 +1,3 @@
-// components/dashboard/lecturer/details/submission-info-card.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -8,9 +7,6 @@ import {
   FileLock2,
   Eye,
   Star,
-  User,
-  Calendar,
-  MessageSquare,
   Shield,
   KeyRound,
   Download,
@@ -41,6 +37,8 @@ interface SubmissionInfoCardProps {
   submission: Submission;
   onDownload: () => void;
   onGrade: () => void;
+  downloadLabel?: string;
+  isDecrypted?: boolean;
 }
 
 const getStatusConfig = (status: SubmissionStatus) => {
@@ -63,37 +61,42 @@ const getStatusConfig = (status: SubmissionStatus) => {
     graded: {
       label: "GRADED",
       icon: CheckCircle,
-      color: "bg-green-500/10 text-green-600 border-green-200",
+      color:
+        "bg-green-500/10 text-green-600 border-green-200 hover:bg-green-700 hover:text-white",
     },
   };
+
   return map[status];
 };
 
 const formatRelativeTime = (date: string) => {
-  const now = new Date();
-  const past = new Date(date);
-  const diffMs = now.getTime() - past.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-  if (diffMins < 60) return `${diffMins} min ago`;
-  if (diffHours < 24) return `${diffHours} hours ago`;
-  return `${diffDays} days ago`;
+  const diff = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (mins < 60) return `${mins} min ago`;
+  if (hours < 24) return `${hours} hours ago`;
+  return `${days} days ago`;
 };
 
 export function SubmissionInfoCard({
   submission,
   onDownload,
   onGrade,
+  downloadLabel,
+  isDecrypted = false,
 }: SubmissionInfoCardProps) {
   const statusConfig = getStatusConfig(submission.status);
   const StatusIcon = statusConfig.icon;
-  const isEncrypted = !!(submission.encryptedKey && submission.iv);
+
+  const canGrade = isDecrypted && submission.status !== "graded";
 
   return (
-    <Card className="rounded-2xl overflow-hidden border-primary/20 bg-gradient-to-br from-background via-background to-primary/5">
+    <Card className="overflow-hidden rounded-2xl border-primary/20 bg-gradient-to-br from-background via-background to-primary/5">
       <div className="p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+        {/* HEADER BADGES */}
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-wrap gap-2">
             <Badge
               className={cn("gap-1 font-mono text-xs", statusConfig.color)}
@@ -101,126 +104,101 @@ export function SubmissionInfoCard({
               <StatusIcon className="size-3" />
               {statusConfig.label}
             </Badge>
-            <Badge
-              variant={isEncrypted ? "default" : "secondary"}
-              className="gap-1 font-mono text-xs"
-            >
-              <Shield className="size-3" /> AES-256
+
+            <Badge variant="secondary" className="gap-1 font-mono text-xs">
+              <Shield className="size-3" />
+              AES-256
             </Badge>
-            <Badge
-              variant={submission.encryptedKey ? "default" : "secondary"}
-              className="gap-1 font-mono text-xs"
-            >
-              <KeyRound className="size-3" /> RSA-2048
+
+            <Badge variant="secondary" className="gap-1 font-mono text-xs">
+              <KeyRound className="size-3" />
+              RSA-2048
             </Badge>
-            {submission.grade && (
-              <Badge
-                variant="outline"
-                className="gap-1 bg-green-500/10 text-green-600 border-green-200 font-mono text-xs"
-              >
-                <Star className="size-3" /> GRADE: {submission.grade}%
+
+            {submission.grade !== undefined && (
+              <Badge className="gap-1 bg-green-500/10 text-green-600 hover:bg-green-700 hover:text-white border-green-200 font-mono text-xs">
+                <Star className="size-3" />
+                GRADE: {submission.grade}%
               </Badge>
             )}
           </div>
-          <span className="text-[10px] font-mono text-muted-foreground">
-            ID: {submission._id}
-          </span>
         </div>
 
-        <h2 className="text-xl font-mono font-bold tracking-tight mb-2">
+        {/* TITLE */}
+        <h2 className="mb-2 text-xl font-bold font-mono">
           {submission.assignmentTitle || "Untitled Assignment"}
         </h2>
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-          <BookOpen className="size-3" />
-          <span className="font-mono text-xs">
+        {/* META */}
+        <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground font-mono">
+          <span>
             {submission.courseCode} - {submission.courseName}
           </span>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 mb-6">
-          <div className="flex items-center gap-2 text-sm">
-            <User className="size-3 text-muted-foreground" />
-            <span className="font-mono text-xs">
-              Student: {submission.student.name}
-            </span>
-            <span className="text-[10px] font-mono text-muted-foreground">
-              ({submission.student.studentId || submission.student.email})
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="size-3 text-muted-foreground" />
-            <span className="font-mono text-xs">
-              Submitted: {formatRelativeTime(submission.createdAt)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <FileLock2 className="size-3 text-muted-foreground" />
-            <span className="font-mono text-xs">
-              File: {submission.originalName || "encrypted.bin"}
-            </span>
-          </div>
-          {submission.viewedAt && (
-            <div className="flex items-center gap-2 text-sm">
-              <Eye className="size-3 text-muted-foreground" />
-              <span className="font-mono text-xs">
-                Viewed: {formatRelativeTime(submission.viewedAt)}
+        <div className="mb-6 grid gap-3 sm:grid-cols-2 text-xs font-mono">
+          <div>
+            Student: {submission.student.name}
+            {submission.student.studentId && (
+              <span className="block text-[10px] text-muted-foreground mt-0.5">
+                ID: {submission.student.studentId}
               </span>
-            </div>
+            )}
+          </div>
+
+          <div>Submitted: {formatRelativeTime(submission.createdAt)}</div>
+
+          <div>File: {submission.originalName}</div>
+
+          {submission.viewedAt && (
+            <div>Viewed: {formatRelativeTime(submission.viewedAt)}</div>
           )}
         </div>
 
+        {/* DESCRIPTION */}
         {submission.description && (
-          <div className="rounded-lg bg-muted/30 p-3 mb-4 border border-primary/10">
-            <div className="flex items-center gap-2 mb-2">
-              <MessageSquare className="size-3 text-primary" />
-              <span className="text-[10px] font-mono font-semibold">
-                STUDENT_NOTE
-              </span>
-            </div>
-            <p className="text-xs font-mono text-muted-foreground">
-              {submission.description}
-            </p>
+          <div className="mb-4 rounded-lg border border-primary/10 bg-muted/30 p-3 text-xs font-mono">
+            {submission.description}
           </div>
         )}
 
+        {/* ACTIONS */}
         <div className="flex flex-wrap gap-3 pt-2">
-          <Button onClick={onDownload} className="gap-2 font-mono text-sm">
+          <Button
+            onClick={onDownload}
+            className="gap-2 font-mono text-sm cursor-pointer hover:bg-primary/90 transition-all duration-200"
+          >
             <Download className="size-4" />
-            DOWNLOAD_ENCRYPTED
+            {downloadLabel || "Download"}
           </Button>
-          {submission.status !== "graded" && (
-            <Button
-              onClick={onGrade}
-              variant="outline"
-              className="gap-2 font-mono text-sm"
-            >
-              <Star className="size-4" />
-              ADD_GRADE
-            </Button>
-          )}
+
+          <Button
+            onClick={onGrade}
+            disabled={!canGrade}
+            variant="outline"
+            className={cn(
+              "gap-2 font-mono text-sm",
+              !canGrade && "opacity-50 cursor-not-allowed",
+            )}
+          >
+            <Star className="size-4" />
+            ADD_GRADE
+          </Button>
         </div>
+
+        {/* LOCK MESSAGE */}
+        {!isDecrypted && (
+          <p className="mt-2 text-[10px] font-mono text-muted-foreground">
+            Decrypt file before grading
+          </p>
+        )}
+
+        {isDecrypted && submission.status !== "graded" && (
+          <p className="mt-2 text-[10px] font-mono text-green-600">
+            Ready for grading
+          </p>
+        )}
       </div>
     </Card>
-  );
-}
-
-function BookOpen({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-    </svg>
   );
 }
