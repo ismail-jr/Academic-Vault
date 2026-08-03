@@ -1,41 +1,63 @@
+<div align="center">
+
 # Academic Vault
 
-Secure assignment submission system with encryption, lecturer review, grading, and file protection.
+**Secure Assignment Submission System**
+
+Encrypted file submission, lecturer review, grading, and role-based access control — built for academic integrity.
+
+[![Next.js](https://img.shields.io/badge/Next.js-App%20Router-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-NoSQL-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Encryption](https://img.shields.io/badge/Encryption-AES--256%20%2B%20RSA-critical)](#-security-model)
+[![Status](https://img.shields.io/badge/status-in%20development-yellow)](#-under-development)
+
+</div>
+
+---
+
+## Overview
+
+**Academic Vault** is a secure assignment submission platform where student files are encrypted end-to-end before storage and only decrypted when a lecturer reviews them. It combines strong file protection with a straightforward grading and feedback workflow.
 
 ---
 
 ## Features
 
-- Student file submission
-- Lecturer review dashboard
-- AES-256 + RSA encryption flow
-- Secure file storage (local uploads)
-- Decryption before review
-- PDF preview support for decrypted files
-- Grading and feedback system
-- Role-based access control (student, lecturer)
+- 📤 Student file submission
+- 👩‍🏫 Lecturer review dashboard
+- 🔒 AES-256 + RSA encryption flow
+- 🗄️ Secure file storage
+- 🔓 Decryption before review
+- 📄 PDF preview support for decrypted files
+- 📝 Grading and feedback system
+- 🛡️ Role-based access control (student, lecturer)
 
 ---
 
-## Tech Stack
+## ech Stack
 
-- Next.js (App Router)
-- Node.js
-- Express
-- MongoDB
-- Multer (file upload)
-- Crypto (AES + RSA encryption)
-- Tailwind CSS
+| Layer | Technology |
+|---|---|
+| **Frontend** | Next.js (App Router) |
+| **Backend** | Node.js + Express |
+| **Database** | MongoDB |
+| **File Upload** | Multer |
+| **Encryption** | Node Crypto (AES-256 + RSA) |
+| **Styling** | Tailwind CSS |
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
-- `/app` Next.js routes
-- `/components` UI components
-- `/contexts` global state
-- `/lib/api` API layer
-- `/backend` Express server
+```
+academic-vault/
+├── app/            # Next.js routes
+├── components/     # UI components
+├── contexts/       # Global state
+├── lib/api/        # API layer
+└── backend/        # Express server
+```
 
 ---
 
@@ -47,9 +69,7 @@ Secure assignment submission system with encryption, lecturer review, grading, a
 npm install
 ```
 
----
-
-### 2. Run backend server
+### 2. Run the backend server
 
 ```bash
 cd backend
@@ -63,9 +83,7 @@ Backend runs on:
 http://localhost:5000
 ```
 
----
-
-### 3. Run frontend
+### 3. Run the frontend
 
 ```bash
 npm run dev
@@ -79,15 +97,15 @@ http://localhost:3000
 
 ---
 
-## Environment Variables
+## 🔑 Environment Variables
 
-Create `.env.local` in frontend:
+**Frontend — `.env.local`**
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
 
-Create `.env` in backend:
+**Backend — `.env`**
 
 ```env
 MONGO_URI=your_mongodb_url
@@ -99,20 +117,19 @@ PORT=5000
 
 ## File Upload System
 
-- Files stored locally in `/uploads`
-- Encrypted before storage
+- Files are encrypted before storage
 - Only decrypted on lecturer request
-- No external storage services required
+- No external storage services currently required *(see [Under Development](#-under-development))*
 
 ---
 
 ## Security Model
 
-- RSA encrypts AES key
-- AES encrypts file content
-- Lecturer private key decrypts AES key
-- File only becomes readable after decryption step
-- Download and preview locked until decrypted
+1. RSA encrypts the AES key
+2. AES encrypts the file content
+3. Lecturer's private key decrypts the AES key
+4. The file only becomes readable after the decryption step
+5. Download and preview stay locked until decrypted
 
 ---
 
@@ -120,22 +137,36 @@ PORT=5000
 
 ### Auth
 
-- POST `/auth/login`
-- POST `/auth/register`
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/auth/login` | Log in an existing user |
+| `POST` | `/auth/register` | Register a new user |
+
+---
+
+## Under Development
+
+- **Cloud file storage migration** — replacing local `/uploads` storage with a cloud storage provider ahead of deployment, so files aren't tied to a single server's filesystem
 
 ---
 
 ## Running Notes
 
-- Ensure backend runs before frontend
-- Ensure `/uploads` folder exists
+- Ensure the backend is running before the frontend
+- Ensure the `/uploads` folder exists locally during development
 - Do not delete encrypted files manually
 - Decryption is idempotent (runs once per file)
 
 ---
 
-## Deployment
+##  Deployment
 
-- coming soon
+Coming soon.
 
 ---
+
+<div align="center">
+
+Built for secure, verifiable academic submissions 
+
+</div>
